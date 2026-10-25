@@ -1,0 +1,3 @@
+# Copy this file to .dev.vars and add your Google AI Studio key locally.
+# Leave it empty for deterministic preview edits. Never commit .dev.vars.
+GEMINI_API_KEY=""
