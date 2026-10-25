@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { RequestSchema } from '@/lib/home/schema';
-import { DesignError, runDesign } from '@/lib/home/workflow';
+import { runDesign } from '@/lib/home/workflow';
+import { ModelServiceError } from '@/lib/home/model-errors';
 export async function POST(request:Request){
   const started=Date.now();const requestId=crypto.randomUUID();
   try{
@@ -12,9 +13,10 @@ export async function POST(request:Request){
     const key=(env as unknown as Record<string,string>).GEMINI_API_KEY;
     return Response.json(await runDesign(parsed.data,key),{headers:{'Cache-Control':'no-store'}});
   }catch(error){
-    const known=error instanceof DesignError;
+    const known=error instanceof ModelServiceError;
     // Log diagnostics only: never API keys, user prompts, model output, or the house contents.
     console.error(JSON.stringify({event:'design_failed',requestId,code:known?error.code:'INTERNAL',elapsedMs:Date.now()-started}));
-    return Response.json({error:known?error.message:'The edit service hit an unexpected problem. Your house is unchanged. Retry this edit.',code:known?error.code:'INTERNAL',retryable:known?error.retryable:true,requestId},{status:known?error.status:500,headers:{'Cache-Control':'no-store'}});
+    const retryAfterSeconds=known?error.retryAfterSeconds:undefined;
+    return Response.json({error:known?error.message:'The edit service hit an unexpected problem. Your house is unchanged. Retry this edit.',code:known?error.code:'INTERNAL',retryable:known?error.retryable:true,retryAfterSeconds,requestId},{status:known?error.status:500,headers:{'Cache-Control':'no-store',...(retryAfterSeconds?{'Retry-After':String(retryAfterSeconds)}:{})}});
   }
 }

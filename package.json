@@ -11,7 +11,7 @@
     "preview": "wrangler dev --config dist/server/wrangler.json --local --ip 127.0.0.1",
     "deploy": "npm run build && wrangler deploy --config dist/server/wrangler.json",
     "typecheck": "tsc --noEmit",
-    "test": "node tests/design-regression.mjs && node tests/matches-regression.mjs",
+    "test": "node tests/design-regression.mjs && node tests/design-client-regression.mjs && node tests/model-errors-regression.mjs && node tests/matches-regression.mjs",
     "check": "npm run typecheck && npm test && npm run build"
   },
   "dependencies": {

@@ -1,5 +1,16 @@
 # Hosting HomeCrush
 
+## Current deployment
+
+- Production: [homecrush.sahiths.workers.dev](https://homecrush.sahiths.workers.dev/)
+- Worker: `homecrush`, connected to `sahith888/homecrush`, production branch `main`.
+- Build: `npm run build`; deploy: `npx wrangler deploy --config dist/server/wrangler.json`.
+- Non-production version command: `npx wrangler versions upload --config dist/server/wrangler.json`.
+- `GEMINI_API_KEY` is an encrypted production runtime secret. It is not a build variable or repository file.
+- Initial live checks passed on October 25, 2026: homepage, Gemma warm-lighting edit, hallway decoration preserving the earlier edit, and three real listing cards with source photos. Listing discovery used the labeled starter collection because Google Search grounding was quota-limited.
+
+Changes pushed to `main` are automatically built by Cloudflare. The application runs independently of the development computer.
+
 Recommendation as of October 25, 2026: **Cloudflare Workers**. The current app already uses Cloudflare's runtime for its server routes, so this route needs the least adaptation. The browser renders the 3D world; the Worker keeps the model key private and handles AI edits and listing retrieval.
 
 ## Options

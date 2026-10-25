@@ -38,7 +38,8 @@ export const DEFAULT_HOUSE:House = { version:1, revision:0, time:'day', rooms:{
   bathroom:{...base,wall:'#dddcd1',floorKind:'stone',floorColor:'#bcbcaf',accent:'#98a18a',rug:false,plants:2},
 }};
 export const PatchSchema = z.object({ room:z.enum([...ROOM_IDS,'house']), key:z.string().max(30), value:z.union([z.string().max(30),z.boolean(),z.number()]) }).strict();
-export const PlanSchema = z.object({ patches:z.array(PatchSchema).max(20), message:z.string().max(1000), question:z.string().max(250).nullish().transform(v=>v||undefined) });
+export const MAX_PATCHES = 128;
+export const PlanSchema = z.object({ patches:z.array(PatchSchema).max(MAX_PATCHES), message:z.string().max(1000), question:z.string().max(250).nullish().transform(v=>v||undefined) });
 export type Patch = z.infer<typeof PatchSchema>;
 export type Plan = z.infer<typeof PlanSchema>;
 export function validatePatches(house:House, patches:Patch[]):House {

@@ -2,12 +2,15 @@
 
 Design and find your dream home, all live and through text.
 
+**Live site:** [homecrush.sahiths.workers.dev](https://homecrush.sahiths.workers.dev/)
+
 Build a furnished two-floor home with an AI guide, walk through it like a game, and explore real U.S. properties with a Tinder-inspired pass-and-heart experience. **Love knows no bounds.**
 
 ## What works
 
 - A colored, furnished Three.js home with eight editable spaces across two floors, including the central hallway and upstairs landing.
 - Iterative Gemma edits through a LangGraph workflow: understand, validate, apply, respond. One bounded repair attempt handles malformed model output; unsuccessful edits preserve the previous home.
+- Alternate grouped edit output is normalized and validated; repairs receive the precise invalid setting. Rate limits show a retry countdown, while exhausted daily quota and hosting errors have distinct messages.
 - Walking controls, connected stairs, collision detection, floor switching, room focus, day/golden-hour/night views, warm lighting, layered decorations, undo and redo.
 - A text description generated from the house and loved rooms, with optional location, price and rent/buy preferences.
 - Up to three real property cards with source photos, prices, links, evidenced feature matches, pass/heart/undo controls, and saved crushes.
@@ -46,7 +49,9 @@ npm run preview
 
 **Cloudflare Workers is the prepared deployment target.** This repository includes a standalone `wrangler.jsonc`, standard Vite configuration, and Worker entrypoint. It does not need a Codex session or the original ChatGPT Site's hosting identity.
 
-See [the hosting guide](docs/HOSTING.md) for Cloudflare setup, GitHub auto-deploy settings, secrets, pricing considerations, and alternatives. Publishing this repository does not deploy a new public application.
+The live Worker is connected to this repository. Pushes to `main` trigger a Cloudflare build and deployment. `GEMINI_API_KEY` is stored as an encrypted production runtime secret in Cloudflare.
+
+See [the hosting guide](docs/HOSTING.md) for build settings, secrets, pricing considerations, and alternatives.
 
 ## Current limits
 
