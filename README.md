@@ -4,7 +4,61 @@ Design and find your dream home, all live and through text.
 
 **Live site:** [homecrush.sahiths.workers.dev](https://homecrush.sahiths.workers.dev/)
 
-Build a furnished two-floor home with an AI guide, walk through it like a game, and explore real U.S. properties with a Tinder-inspired pass-and-heart experience. **Love knows no bounds.**
+HomeCrush turns finding your dream home into an interactive experience. Describe what you want to an AI design guide powered by Gemma, and watch a furnished, two-story 3D home evolve through conversation. Refine colors, flooring, lighting, plants, and décor, walk through both floors, then explore real U.S. properties with a Tinder-inspired pass-and-heart experience. **Love knows no bounds.**
+
+Traditional home searches ask people to define their preferences through filters before they have figured out what feels like home. HomeCrush helps home seekers discover and express those preferences visually, then translates the design into a text profile for matching against real listings.
+
+The application is written in **TypeScript**, with **React** for the interface, **Three.js** for the explorable world, **LangGraph** for the AI edit workflow, and **Zod** for runtime validation. **Vinext/Vite** builds the application for **Cloudflare Workers**, while **GitHub Actions** checks the code and Cloudflare automatically deploys pushes to `main`.
+
+## Hackathon track: Gemma
+
+**We are competing in the Gemma track.** Gemma is the conversational design engine: it interprets a user's request in the context of the existing house and proposes incremental scene changes. The implementation uses the hosted `gemma-4-26b-a4b-it` model through the **Gemini API**, with model access configured through **Google AI Studio**.
+
+### How we implemented the API
+
+The browser sends the user's prompt, selected room, current house state, and recent conversation to [`POST /api/design`](app/api/design/route.ts). The server validates that request and invokes the [LangGraph workflow](lib/home/workflow.ts), which calls:
+
+```text
+POST https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b-a4b-it:generateContent
+```
+
+The request supplies a `systemInstruction` defining supported rooms and settings, the design context in `contents`, and generation settings with low temperature and minimal thinking. Authentication uses the `x-goog-api-key` header. The key stays in the encrypted Cloudflare runtime secret `GEMINI_API_KEY`; it is never sent to the browser or committed to this repository.
+
+Gemma returns a JSON edit plan, a short explanation, and an optional follow-up question. For example:
+
+```json
+{
+  "patches": [
+    { "room": "living", "key": "lighting", "value": "warm" },
+    { "room": "living", "key": "lamp", "value": true }
+  ],
+  "message": "Added warm lighting to the living room."
+}
+```
+
+### Why LangGraph matters
+
+LangGraph coordinates an explicit **understand → validate → apply → respond** workflow. Its state carries the design request, proposed plan, original model response, validation issue, attempt count, and resulting house. Conditional edges route malformed or unsupported edits through a repair step before any scene changes are applied.
+
+```mermaid
+flowchart TD
+    A[Prompt and current house] --> B[Understand with Gemma]
+    B -->|Parsed plan| C[Validate with Zod and room rules]
+    B -->|Malformed plan| D[Repair with Gemma]
+    C -->|Valid| E[Apply patches to a copy of the house]
+    C -->|Invalid, repair unused| D
+    D -->|Parsed correction| C
+    C -->|Invalid after repair| F[Return error; keep existing house]
+    D -->|Still malformed| F
+    E --> G[Respond with updated house and explanation]
+    G --> H[React updates Three.js and saves browser revision]
+```
+
+The parser normalizes supported alternate output formats, including grouped room settings, while validation checks room IDs, property names, value types, ranges, and hallway restrictions. A repair request includes the **specific validation error and the original model output**, giving Gemma concrete feedback instead of simply repeating the prompt. There is at most one semantic repair attempt; changes are applied only after the entire plan passes validation, so failed requests preserve the previous design.
+
+Each new turn includes the current house, allowing Gemma to build on earlier choices. The browser keeps revision history and undo/redo in local storage; the graph runs per edit request rather than relying on a persistent server-side conversation. Rate limits, exhausted quota, temporary provider failures, and invalid plans have distinct handling, including a retry countdown when Google supplies a rate-limit delay.
+
+Gemma drives house design; property discovery is a separate text-matching feature using Gemini Google Search when available and the labeled listing fallback described below. The project uses hosted inference, not fine-tuned or locally deployed Gemma weights.
 
 ## What works
 
